@@ -1,0 +1,131 @@
+---
+title: "My BellaBeat Analysis"
+author: "Samuel Solomon Inioribo"
+date: "2023-07-04"
+output: html_document
+---
+
+## Firstly, I installed Skimr, dplyr, here, ggplot2 and tidyverse packages
+
+```{Installing the packages}
+install.packages("tidyverse")
+install.packages("skimr")
+install.packages(ggplot2)
+```
+
+## After intallation of the packages, I loaded them on the R Studio. 
+```{r loading the packages}
+library(tidyverse)
+library(skimr)
+library(ggplot2)
+```
+
+## After installing and loading the package to used, I installed and load the dataset that I find relevant for the Analysis. They are: dailyActivityMerged.csv and weightLog. The datasets were downloaded from <https://www.kaggle.com/arashnic/fitbit>
+
+```{r}
+daily_activity <- read_csv("dailyActivity_merged.csv")
+weightLogInfo_merged <- read_csv(("weightLogInfo_merged.csv"))
+```
+
+
+After loading the files, I checked to preview both datasets
+
+
+```{previewing datasets}
+head(daily_activity)
+```
+
+```{r}
+head(weightLogInfo_merged)
+```
+
+
+I also previewed the Columns of each dataset
+
+
+```{r previewing columns}
+colnames(daily_activity)
+colnames(weightLogInfo_merged)
+```
+
+## I checked for duplicates
+
+
+```{r checking for duplicates}
+sum(duplicated(daily_activity))
+sum(duplicated(weightLogInfo_merged))
+```
+
+## I confirmed that there was no duplicate. Next is to calculate average per user and group each user by "Id"
+
+```{r Getting the average daily activity per user and calories burned}
+avg_daily_activity <- daily_activity %>%  group_by(Id) %>%
++     summarise (avg_daily_steps = mean(TotalSteps), avg_distance = mean(TotalDistance), avg_calories = mean(Calories))
+```
+
+## For the weight logs, I decided to use the user's BMI for my analysis. So I extracted the BMI for each user entry from the "weight_log" data frame
+
+```{r extracting the BMI}
+weight <- select(weightLogInfo_merged, Id, BMI)
+```
+
+## After doing this, I get the average BMI for each user
+
+```{r getting the average for each user by their Id}
+avg_weight_loss <-  weight %>% group_by(Id) %>% summarize (avg_bmi = mean(BMI))
+```
+
+##I checked to confirm confirm the entries
+
+```{r}
+head(avg_weight_loss)
+```
+
+## All done, I decided to do the Analysis. I decide that it is important to get to know how steps and distance help in loss of calories, how loss of calories correlate with BMI, and how steps and distance helps reduce with BMI. I shall use scatter plot.
+
+### For steps, distance and calories correlation, I ploted line charts for "Steps vs DIstance", "Steps Vs Calories" and "Distance vs Calories"
+
+```{r Steps vs Distance}
+
+avg_steps_vs_avg_distance <- ggplot(avg_daily_activity, aes(avg_distance, avg_daily_steps)) + geom_point(color="red") + geom_smooth() + labs(title="Steps Vs Distance")
+```
+
+```{Distance vs Calories}
+avg_distance_vs_calories <- ggplot(avg_daily_activity, aes(avg_distance, avg_calories)) + geom_point(color="orange") + geom_smooth() + labs(title="Calories Vs Distance")
+```
+
+```{r Steps vs Calories}
+avg_steps_vs_calories <- ggplot(avg_daily_activity, aes(avg_daily_steps, avg_calories)) + geom_point(color="darkgreen") + geom_smooth() + labs(title="Calories Vs Steps")
+```
+
+## From the three graphs, it can be deduced that users calories burn rate increases when they walk more steps and cover longer distance. It is a common knowledge that people lose weight when they more calories. But it may be too early to reach conclusion. Therefore, I will analyse date of people's BMI with respect to their steps and distance they covered.
+
+### Before I proceed, I will have to join "avg_weight_loss" and "avg_daily_activity" DataFrames
+
+```{r Joining the two DataFrames}
+avg_daily_activity_weight <- full_join(avg_daily_activity, avg_weight_loss, by=c("Id"))
+```
+
+### To check the merged dataFrames
+
+```{r}
+View(avg_daily_activity_weight)
+```
+
+## Now to check how distance walked, step taken and calories burned affect BMI
+
+```{r Calories Vs BMI}
+calories_vs_bmi <- ggplot(avg_daily_activity_weight, aes(avg_calories, avg_bmi)) + geom_point(color="purple") + geom_smooth() + labs(title="Calories Vs BMI")
+```
+
+```{r Steps Vs BMI}
+steps_vs_bmi <- ggplot(avg_daily_activity_weight, aes(avg_daily_steps, avg_bmi)) + geom_point() + geom_smooth() + labs(title="Steps Vs BMI")
+```
+
+```{r Distance Vs BMI}
+distance_vs_bmi <- ggplot(avg_daily_activity_weight, aes(avg_distance, avg_bmi)) + geom_point(color="blue") + geom_smooth() + labs(title="Distance Vs BMI")
+```
+
+### It can be seen that users that covered longer distance (take\ing longer steps) have lower BMI and burned higher quamtity of calories.
+
+### The
